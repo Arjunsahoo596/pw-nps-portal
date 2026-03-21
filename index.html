@@ -272,7 +272,7 @@ textarea::placeholder{color:var(--text3);}
       </div>
       <div class="fg">
         <label class="flabel">Team <span class="req">*</span></label>
-        <div class="sel-wrap"><select id="team" onchange="onTeam()" disabled>
+        <div class="sel-wrap"><select id="team" onchange="onTeam()">
           <option value="">— Select Team —</option>
           <option value="City">City</option>
           <option value="Head Office (Noida)">Head Office (Noida)</option>
@@ -408,7 +408,7 @@ const HA={
 
 const R={};let nps=null,ia=null;
 
-function onVert(){const v=document.getElementById('vertical').value,t=document.getElementById('team');t.disabled=!v;t.value='';document.getElementById('cf').style.display='none';document.getElementById('hf').style.display='none';}
+function onVert(){const v=document.getElementById('vertical').value,t=document.getElementById('team');t.value='';t.style.opacity=v?'1':'0.35';t.style.pointerEvents=v?'auto':'none';document.getElementById('cf').style.display='none';document.getElementById('hf').style.display='none';}
 function onTeam(){const t=document.getElementById('team').value;document.getElementById('cf').style.display=t==='City'?'block':'none';document.getElementById('hf').style.display=t==='Head Office (Noida)'?'block':'none';document.getElementById('region').value='';document.getElementById('dept').value='';rsel('ac','— Select Region first —');rsel('ah','— Select Department first —');}
 function onRegion(){const r=document.getElementById('region').value;fsel('ac',r?(CA[r]||[]):[],'— Select Analyst —');}
 function onDept(){const d=document.getElementById('dept').value;fsel('ah',d?(HA[d]||[]):[],'— Select Analyst —');}
@@ -456,8 +456,7 @@ function tab(i,b){document.querySelectorAll('.stab').forEach(x=>x.classList.remo
 function anon(v){ia=v;document.getElementById('by').className='tbtn'+(v?' ay':'');document.getElementById('bn').className='tbtn'+(!v?' an':'');document.getElementById('idf').className='id-fields'+(!v?' show':'');}
 
 // ── PASTE YOUR SCRIPT URL HERE AFTER SETUP ───────────────────────
-const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec
-';
+const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec';
 // ─────────────────────────────────────────────────────────────────
 
 async function submit(){
@@ -494,7 +493,7 @@ async function submit(){
   localStorage.setItem('nps_responses',JSON.stringify(all));
 
   // Send to Google Sheets if URL is configured
-  if(SHEET_URL && SHEET_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'){
+  if(SHEET_URL && SHEET_URL !== 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec'){
     try{
       await fetch(SHEET_URL, {
         method:'POST',
@@ -515,7 +514,7 @@ async function submit(){
 
 function reset(){
   nps=null;ia=null;Object.keys(R).forEach(k=>R[k]=0);
-  ['vertical','team','region','dept','ac','ah'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.value='';el.disabled=['team','ac','ah'].includes(id);});
+  ['vertical','team','region','dept','ac','ah'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.value='';if(id==='team'){el.style.opacity='0.35';el.style.pointerEvents='none';}else{el.disabled=['ac','ah'].includes(id);}});
   document.getElementById('cf').style.display='none';document.getElementById('hf').style.display='none';
   document.querySelectorAll('.nps-btn').forEach(b=>b.className='nps-btn');
   document.getElementById('nbw').innerHTML='';
