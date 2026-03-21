@@ -205,7 +205,8 @@ td{padding:9px 12px;color:var(--text);vertical-align:middle;white-space:nowrap;}
     <div class="logo-tag">PW Education · Analytics Team</div>
   </div>
   <div class="hbtns">
-    <button class="hbtn hbtn-seed" onclick="seedData()">✦ Load Sample Data</button>
+    <button class="hbtn hbtn-seed" onclick="seedData()">✦ Sample Data</button>
+    <button id="sync-btn" class="hbtn" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);color:#34d399;" onclick="load()">⟳ Sync Sheet</button>
     <button class="hbtn hbtn-export" onclick="exportCSV()">⬇ Export CSV</button>
     <a href="index.html" class="back-link">← Feedback Form</a>
   </div>
@@ -310,13 +311,52 @@ td{padding:9px 12px;color:var(--text);vertical-align:middle;white-space:nowrap;}
 </div>
 
 <script>
+// ── PASTE YOUR SCRIPT URL HERE AFTER SETUP ───────────────────────
+const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec
+';
+// ─────────────────────────────────────────────────────────────────
+
 let all=[],filtered=[],cur=1;const PS=15;const CH={};
 
-function load(){
+async function load(){
+  // Load from localStorage first (instant)
   all=JSON.parse(localStorage.getItem('nps_responses')||'[]');
   all.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
-  filtered=[...all];renderAll();
+  filtered=[...all];
+  renderAll();
+
+  // Then fetch from Google Sheets if configured
+  if(SHEET_URL && SHEET_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'){
+    try{
+      showSyncBadge('Syncing…','var(--amber)');
+      const res = await fetch(SHEET_URL + '?action=get');
+      const data = await res.json();
+      if(data && Array.isArray(data)){
+        // Merge sheet data with local, deduplicate by id
+        const localIds = new Set(all.map(x=>x.id));
+        const newEntries = data.filter(x=>!localIds.has(x.id));
+        all = [...all, ...newEntries];
+        all.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+        localStorage.setItem('nps_responses', JSON.stringify(all));
+        filtered=[...all];
+        renderAll();
+        showSyncBadge('Synced ✓','var(--green)');
+        setTimeout(()=>hideSyncBadge(),3000);
+      }
+    }catch(err){
+      console.warn('Sheet fetch failed:', err);
+      showSyncBadge('Offline mode','var(--text3)');
+      setTimeout(()=>hideSyncBadge(),3000);
+    }
+  }
 }
+
+function showSyncBadge(text,color){
+  let b=document.getElementById('sync-badge');
+  if(!b){b=document.createElement('span');b.id='sync-badge';b.style.cssText='font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid;margin-left:8px;transition:all .3s;';document.querySelector('.logo-wrap').appendChild(b);}
+  b.textContent=text;b.style.color=color;b.style.borderColor=color;b.style.display='inline-block';
+}
+function hideSyncBadge(){const b=document.getElementById('sync-badge');if(b)b.style.display='none';}
 
 function renderAll(){renderMetrics();renderCharts();renderTable();renderBreakdown();renderApprComp();}
 
