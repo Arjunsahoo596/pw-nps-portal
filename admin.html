@@ -312,8 +312,7 @@ td{padding:9px 12px;color:var(--text);vertical-align:middle;white-space:nowrap;}
 
 <script>
 // ── PASTE YOUR SCRIPT URL HERE AFTER SETUP ───────────────────────
-const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec
-';
+const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec';
 // ─────────────────────────────────────────────────────────────────
 
 let all=[],filtered=[],cur=1;const PS=15;const CH={};
@@ -326,7 +325,7 @@ async function load(){
   renderAll();
 
   // Then fetch from Google Sheets if configured
-  if(SHEET_URL && SHEET_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'){
+  if(SHEET_URL && SHEET_URL !== 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec'){
     try{
       showSyncBadge('Syncing…','var(--amber)');
       const res = await fetch(SHEET_URL + '?action=get');
