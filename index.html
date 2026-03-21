@@ -492,17 +492,18 @@ async function submit(){
   all.push(e);
   localStorage.setItem('nps_responses',JSON.stringify(all));
 
-  // Send to Google Sheets if URL is configured
-  if(SHEET_URL && SHEET_URL !== 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec'){
+  // Send to Google Sheets via form-encoded POST (works with Google Apps Script)
+  if(SHEET_URL){
     try{
+      const formData = new FormData();
+      formData.append('data', JSON.stringify(e));
       await fetch(SHEET_URL, {
         method:'POST',
         mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(e)
+        body: formData
       });
     }catch(err){
-      console.warn('Google Sheets sync failed (response still saved locally):', err);
+      console.warn('Sheets sync failed, saved locally:', err);
     }
   }
 
