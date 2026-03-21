@@ -455,11 +455,24 @@ function tab(i,b){document.querySelectorAll('.stab').forEach(x=>x.classList.remo
 
 function anon(v){ia=v;document.getElementById('by').className='tbtn'+(v?' ay':'');document.getElementById('bn').className='tbtn'+(!v?' an':'');document.getElementById('idf').className='id-fields'+(!v?' show':'');}
 
-function submit(){
+// ── PASTE YOUR SCRIPT URL HERE AFTER SETUP ───────────────────────
+const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec
+';
+// ─────────────────────────────────────────────────────────────────
+
+async function submit(){
   if(nps===null){document.getElementById('ne').classList.add('show');return;}
+
+  // Show loading state
+  const submitBtn = document.querySelector('.btn-blue');
+  const origText = submitBtn.innerHTML;
+  submitBtn.innerHTML = 'Submitting…';
+  submitBtn.disabled = true;
+
   const t=document.getElementById('team').value,ic=t==='City';
   const e={
-    id:'NPS-'+Date.now(),timestamp:new Date().toISOString(),
+    id:'NPS-'+Date.now(),
+    timestamp:new Date().toISOString(),
     vertical:document.getElementById('vertical').value,team:t,
     region:ic?document.getElementById('region').value:'',
     department:!ic?document.getElementById('dept').value:'',
@@ -474,8 +487,30 @@ function submit(){
     submitter_name:ia===false?document.getElementById('sn').value:'Anonymous',
     submitter_pwid:ia===false?document.getElementById('sp').value:'—',
   };
-  const all=JSON.parse(localStorage.getItem('nps_responses')||'[]');all.push(e);localStorage.setItem('nps_responses',JSON.stringify(all));
-  document.getElementById('tref').innerHTML=`Response ID: <strong>${e.id}</strong>`;sp(2,3);
+
+  // Always save locally
+  const all=JSON.parse(localStorage.getItem('nps_responses')||'[]');
+  all.push(e);
+  localStorage.setItem('nps_responses',JSON.stringify(all));
+
+  // Send to Google Sheets if URL is configured
+  if(SHEET_URL && SHEET_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'){
+    try{
+      await fetch(SHEET_URL, {
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(e)
+      });
+    }catch(err){
+      console.warn('Google Sheets sync failed (response still saved locally):', err);
+    }
+  }
+
+  submitBtn.innerHTML = origText;
+  submitBtn.disabled = false;
+  document.getElementById('tref').innerHTML=`Response ID: <strong>${e.id}</strong>`;
+  sp(2,3);
 }
 
 function reset(){
