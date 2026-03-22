@@ -377,7 +377,7 @@ td{padding:9px 12px;color:var(--text);vertical-align:middle;white-space:nowrap;}
 // Add/remove email addresses here to control admin access
 const ALLOWED_EMAILS = [
   'arjun.sahoo@pw.live',
-  'deepanshu.verma@pw.live'
+  'deepanshu.verma@pw.live',
   // Add more emails below this line:
   // 'newperson@pw.live',
 ];
@@ -504,11 +504,12 @@ function parseCSV(text){
     const c=text[i];
     if(c==='"'){if(inQ&&text[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
     else if(c===','&&!inQ){row.push(cur);cur='';}
-    else if((c==='
-'||c==='
-')&&!inQ){if(c==='
-'&&text[i+1]==='
-')i++;row.push(cur);if(row.some(x=>x))rows.push(row);row=[];cur='';}
+    else if((c==='\n'||c==='\r')&&!inQ){
+      if(c==='\r'&&text[i+1]==='\n')i++;
+      row.push(cur);
+      if(row.some(x=>x))rows.push(row);
+      row=[];cur='';
+    }
     else cur+=c;
   }
   if(cur||row.length){row.push(cur);if(row.some(x=>x))rows.push(row);}
