@@ -384,6 +384,14 @@ const ALLOWED_EMAILS = [
 
 const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec';
 
+// ── PASTE YOUR GOOGLE SHEET ID HERE ─────────────────────────────
+// Open your Google Sheet → look at the URL:
+// https://docs.google.com/spreadsheets/d/SHEET_ID_IS_HERE/edit
+// Copy the long ID between /d/ and /edit and paste below
+// Also make sure sheet is shared: Share → Anyone with link → Viewer
+const SHEET_ID = '1uYgztLk3hkUwGFUXJoAXe_M0nBazbvv5zpvcTZepq0k';
+// ────────────────────────────────────────────────────────────────
+
 function doLogin(){
   const email = document.getElementById('login-email').value.trim().toLowerCase();
   const err = document.getElementById('login-err');
@@ -434,26 +442,77 @@ async function load(){
 async function syncSheet(){
   const btn=document.getElementById('sync-btn');
   btn.innerHTML='⟳ Syncing…';btn.disabled=true;
-  if(SHEET_URL){
-    try{
-      const res=await fetch(SHEET_URL+'?action=get');
-      const data=await res.json();
-      if(data&&Array.isArray(data.rows)&&data.rows.length){
-        const localIds=new Set(all.map(x=>x.id));
-        const newRows=data.rows.filter(r=>!localIds.has(r.id));
-        if(newRows.length){
-          all=[...all,...newRows];
-          localStorage.setItem('nps_responses',JSON.stringify(all));
-          all.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
-          filtered=[...all];renderAll();
-          alert('✓ Synced '+newRows.length+' new response(s) from Google Sheets!');
-        } else {
-          alert('✓ Already up to date. No new responses.');
-        }
-      }
-    }catch(e){alert('Could not connect to Google Sheets. Check your Script URL.');}
+  if(!SHEET_ID){
+    alert('Please set your SHEET_ID at the top of admin.html');
+    btn.innerHTML='⟳ Sync Sheet';btn.disabled=false;
+    return;
+  }
+  try{
+    // Fetch sheet as CSV using Google Sheets public export URL (no auth needed)
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet=NPS+Responses';
+    const res = await fetch(csvUrl);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+    if(rows.length <= 1){ alert('No responses in sheet yet.'); btn.innerHTML='⟳ Sync Sheet';btn.disabled=false; return; }
+    const headers = rows[0];
+    const newEntries = rows.slice(1).map(row => {
+      const d = {};
+      headers.forEach((h,i) => d[h.trim()] = (row[i]||'').trim());
+      return {
+        id: d['ID'], timestamp: d['Timestamp'],
+        vertical: d['Vertical'], team: d['Team'],
+        region: d['Region'], department: d['Department'], analyst: d['Analyst'],
+        nps_score: Number(d['NPS Score']), nps_category: d['NPS Category'],
+        overall_exp: Number(d['Overall Experience']), staff_behavior: Number(d['Staff Behavior']),
+        process_smooth: Number(d['Process Smoothness']), comm_clarity: Number(d['Communication Clarity']),
+        understanding: Number(d['Understanding Needs']), professionalism: Number(d['Professionalism']),
+        responsiveness: Number(d['Responsiveness']), problem_solving: Number(d['Problem Solving']),
+        appr_comment: d['Appreciation Comment'],
+        delay_response: Number(d['Delay Response']), miscommunication: Number(d['Miscommunication']),
+        process_complexity: Number(d['Process Complexity']), staff_issue: Number(d['Staff Issue']),
+        comp_comment: d['Complaint Comment'],
+        anonymous: d['Anonymous']==='Yes',
+        submitter_name: d['Submitter Name'], submitter_pwid: d['PW ID']
+      };
+    }).filter(r => r.id);
+    const localIds = new Set(all.map(x=>x.id));
+    const fresh = newEntries.filter(r=>!localIds.has(r.id));
+    if(fresh.length){
+      all = [...all, ...fresh];
+      localStorage.setItem('nps_responses', JSON.stringify(all));
+      all.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+      filtered=[...all]; renderAll();
+      alert('✓ Synced '+fresh.length+' new response(s) from Google Sheets!');
+    } else {
+      // Full refresh from sheet (sheet is source of truth)
+      all = newEntries;
+      localStorage.setItem('nps_responses', JSON.stringify(all));
+      all.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+      filtered=[...all]; renderAll();
+      alert('✓ Refreshed! '+newEntries.length+' total response(s) loaded from Google Sheets.');
+    }
+  }catch(e){
+    alert('Sync failed: '+e.message+'\n\nMake sure your Google Sheet is shared publicly (Anyone with link can VIEW).');
   }
   btn.innerHTML='⟳ Sync Sheet';btn.disabled=false;
+}
+
+function parseCSV(text){
+  const rows=[];let row=[],cur='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(c==='"'){if(inQ&&text[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+    else if(c===','&&!inQ){row.push(cur);cur='';}
+    else if((c==='
+'||c==='
+')&&!inQ){if(c==='
+'&&text[i+1]==='
+')i++;row.push(cur);if(row.some(x=>x))rows.push(row);row=[];cur='';}
+    else cur+=c;
+  }
+  if(cur||row.length){row.push(cur);if(row.some(x=>x))rows.push(row);}
+  return rows;
 }
 
 function renderAll(){renderMetrics();renderCharts();renderTable();renderBreakdown();renderApprComp();renderAnalystGrid();}
