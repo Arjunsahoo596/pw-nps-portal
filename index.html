@@ -456,7 +456,7 @@ function tab(i,b){document.querySelectorAll('.stab').forEach(x=>x.classList.remo
 function anon(v){ia=v;document.getElementById('by').className='tbtn'+(v?' ay':'');document.getElementById('bn').className='tbtn'+(!v?' an':'');document.getElementById('idf').className='id-fields'+(!v?' show':'');}
 
 // ── PASTE YOUR SCRIPT URL HERE AFTER SETUP ───────────────────────
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyDo3B2uStAm2RtPg_EBZbrOdLjUy5caM_GMkg2guXhaKXkVrr5Te8lQ4wlnaVtpx3e/exec';
+const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec';
 // ─────────────────────────────────────────────────────────────────
 
 async function submit(){
@@ -492,15 +492,16 @@ async function submit(){
   all.push(e);
   localStorage.setItem('nps_responses',JSON.stringify(all));
 
-  // Send to Google Sheets via form-encoded POST (works with Google Apps Script)
+  // Send to Google Sheets using URL params (most reliable with no-cors)
   if(SHEET_URL){
     try{
-      const formData = new FormData();
-      formData.append('data', JSON.stringify(e));
+      const params = new URLSearchParams();
+      params.append('data', JSON.stringify(e));
       await fetch(SHEET_URL, {
         method:'POST',
         mode:'no-cors',
-        body: formData
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body: params.toString()
       });
     }catch(err){
       console.warn('Sheets sync failed, saved locally:', err);
