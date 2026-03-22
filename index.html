@@ -456,7 +456,7 @@ function tab(i,b){document.querySelectorAll('.stab').forEach(x=>x.classList.remo
 function anon(v){ia=v;document.getElementById('by').className='tbtn'+(v?' ay':'');document.getElementById('bn').className='tbtn'+(!v?' an':'');document.getElementById('idf').className='id-fields'+(!v?' show':'');}
 
 // ── PASTE YOUR SCRIPT URL HERE AFTER SETUP ───────────────────────
-const SHEET_URL = 'https://script.google.com/a/macros/pw.live/s/AKfycbxiIc_SD97XFku0scmN4Z4lM0VH40p1BcscCw84mekUMLytDdnlgcLeC7Mol3reyCq2/exec';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyDo3B2uStAm2RtPg_EBZbrOdLjUy5caM_GMkg2guXhaKXkVrr5Te8lQ4wlnaVtpx3e/exec';
 // ─────────────────────────────────────────────────────────────────
 
 async function submit(){
@@ -492,17 +492,14 @@ async function submit(){
   all.push(e);
   localStorage.setItem('nps_responses',JSON.stringify(all));
 
-  // Send to Google Sheets using URL params (most reliable with no-cors)
+  // Send to Google Sheets via Image ping (bypasses ALL CORS/domain restrictions)
   if(SHEET_URL){
     try{
-      const params = new URLSearchParams();
-      params.append('data', JSON.stringify(e));
-      await fetch(SHEET_URL, {
-        method:'POST',
-        mode:'no-cors',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body: params.toString()
-      });
+      const payload = encodeURIComponent(JSON.stringify(e));
+      const img = new Image();
+      img.src = SHEET_URL + '?data=' + payload;
+      // Also try fetch as fallback
+      fetch(SHEET_URL + '?data=' + payload, {mode:'no-cors'}).catch(()=>{});
     }catch(err){
       console.warn('Sheets sync failed, saved locally:', err);
     }
